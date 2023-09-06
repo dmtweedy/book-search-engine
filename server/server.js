@@ -1,13 +1,20 @@
 const express = require('express');
+const { ApolloServer } = require('apollo-server-express');
 const path = require('path');
 const db = require('./config/connection');
 const routes = require('./routes');
-
 const app = express();
 const PORT = process.env.PORT || 3001;
+const typeDefs = require('');
+const resolvers = require('');
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+});
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+server.applyMiddleware({ app, path: '/graphql' });
 
 // if we're in production, serve client/build as static assets
 if (process.env.NODE_ENV === 'production') {
