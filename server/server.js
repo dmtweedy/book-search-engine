@@ -5,11 +5,10 @@ const db = require('./config/connection');
 const routes = require('./routes');
 const app = express();
 const PORT = process.env.PORT || 3001;
-const typeDefs = require('');
-const resolvers = require('');
+const { typeDefs, resolvers } = require('./schemas'); 
 const server = new ApolloServer({
   typeDefs,
-  resolvers,
+  resolvers
 });
 
 app.use(express.urlencoded({ extended: true }));
