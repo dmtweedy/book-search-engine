@@ -3,25 +3,47 @@ const { ApolloServer } = require('apollo-server-express');
 const path = require('path');
 const db = require('./config/connection');
 const routes = require('./routes');
-const app = express();
-const PORT = process.env.PORT || 3001;
-const { typeDefs, resolvers } = require('./schemas'); 
-const server = new ApolloServer({
-  typeDefs,
-  resolvers
-});
+const { typeDefs, resolvers } = require('./schemas');
 
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
-server.applyMiddleware({ app, path: '/graphql' });
+async function startServer() {
+  const app = express();
+  const PORT = process.env.PORT || 3001;
 
-// if we're in production, serve client/build as static assets
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../client/build')));
+  app.use((req, res, next) => {
+    console.log(`Received request for: ${req.url}`);
+    next();
+  });
+
+  const server = new ApolloServer({
+    typeDefs,
+    resolvers,
+  });
+
+  await server.start(); // Ensure the Apollo Server is started
+
+  app.use(express.urlencoded({ extended: true }));
+  app.use(express.json());
+
+  server.applyMiddleware({ app, path: '/graphql' });
+
+  if (process.env.NODE_ENV === 'production') {
+    app.use(express.static(path.join(__dirname, '../client/build')));
+  }
+
+  app.get('*.js', (req, res, next) => {
+    res.type('application/javascript');
+    next();
+  });
+
+  app.get('*', (req, res) => {
+      res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+  });
+
+  app.use(routes);
+
+  db.once('open', () => {
+    app.listen(PORT, () => console.log(`🌍 Now listening on http://localhost:${PORT}`));
+  });
 }
 
-app.use(routes);
-
-db.once('open', () => {
-  app.listen(PORT, () => console.log(`🌍 Now listening on http://localhost:${PORT}`));
-});
+startServer();
